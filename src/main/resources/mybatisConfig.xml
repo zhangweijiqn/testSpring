@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN"
+        "http://www.springframework.org/dtd/spring-beans.dtd">
+<beans >
+
+    <bean id="abstractDataSource" abstract="true" class="com.jolbox.bonecp.BoneCPDataSource" destroy-method="close">
+        <property name="driverClass" value="com.mysql.jdbc.Driver" />
+        <property name="idleConnectionTestPeriodInMinutes" value="10" />
+        <property name="idleMaxAgeInMinutes" value="240" />
+        <property name="maxConnectionsPerPartition" value="3" />
+        <property name="minConnectionsPerPartition" value="1" />
+        <property name="partitionCount" value="2" />
+        <property name="acquireIncrement" value="5" />
+        <property name="statementsCacheSize" value="20" />
+        <property name="releaseHelperThreads" value="3" />
+    </bean>
+
+    <bean id="masterDataSource" parent="abstractDataSource">
+        <property name="jdbcUrl" value="jdbc:MySql://172.18.147.105:3306/dmpcloud?characterEncoding=UTF-8" />
+        <property name="username" value="hive" />
+        <property name="password" value="hive" />
+    </bean>
+    <!-- 配置事务管理器 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="masterDataSource" />
+    </bean>
+    <!-- 集成Mybatis -->
+    <bean id="sessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="masterDataSource" />
+        <property name="configLocation" value="classpath:sqlmap-config.xml" />
+    </bean>
+    <bean id="sqlTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sessionFactory" />
+    </bean>
+    <bean id="batchSqlTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg index="0" ref="sessionFactory" />
+        <constructor-arg index="1" value="BATCH" />
+    </bean>
+
+
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.test.MybatisSpring" />
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+    </bean>
+
+</beans>

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+       ">
+
+
+    <!--test for import other xml configure file-->
+    <import resource="child-config.xml" />
+
+
+    <!--test for define beans-->
+    <bean id="testPerson" class="test.zwj.Bean.Person">
+        <property name="name" value="zhangsan"/>
+        <property name="age" value="21"/>
+        <property name="info" ref="info"></property>
+    </bean>
+
+
+    <aop:aspectj-autoproxy/>
+
+
+    <!--test for define an aspect-->
+       <bean id="aspect" class="test.zwj.Aspect.AnnoAspectTest"></bean>
+    <!--   <aop:config>
+           <aop:aspect ref="aspect">
+               <aop:pointcut id="embark" expression="execution(* test.zwj.Bean.Person.getInfo(..))" />
+               <aop:before method="dobefore" pointcut-ref="embark"/>
+               <aop:after method="doafter" pointcut-ref="embark"/>
+           </aop:aspect>
+       </aop:config>-->
+
+
+    <!--test for jdbc connect to mysql-->
+    <!-- jdbc properties import from a properties file, mysql dependency:mysql-connector-java -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="${jdbc.driverClassName}"/>
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+    </bean>
+    <!--using jdbcTemplate，加载dataSource，并且可以免去连接和SQLException的处理-->
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <constructor-arg ref="dataSource"/>
+    </bean>
+    <!--inject jdbcTemplate to PersonDAO class-->
+    <bean id="PersonDAO" class="test.zwj.jdbc.PersonDAOImpl">
+        <property name="jdbcTemplate" ref="jdbcTemplate"/>
+    </bean>
+
+
+    <!--JNDI 连接池-->
+    <!--c3p0连接池-->
+
+
+    <!-- 配置事务，待测 -->
+    <bean id="transactionManager"
+          class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+    <!-- 配置基于注解的事物aop,@Transactional指定事务管理器 -->
+    <tx:annotation-driven transaction-manager="transactionManager" proxy-target-class="true"/>
+
+</beans>
